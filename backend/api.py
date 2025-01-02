@@ -34,131 +34,38 @@ llm = ChatOpenAI(
 
 # SOAP note template
 soap_template = """
-You are an experienced cardiologist. Convert the following conversation transcript into a detailed SOAP note.
-Focus on cardiovascular findings and maintain professional medical terminology.
+# SOAP Note Template
 
-Conversation Transcript:
-{transcript}
+Please format your response using the following markdown structure:
 
-Generate a comprehensive SOAP note using the following format:
+## Subjective
+[Patient's history, symptoms, and complaints]
 
-==============================================
-                SOAP NOTE
-==============================================
-Date: [Current Date]
-Provider: Dr. [Name]
-==============================================
+## Objective 
+[Physical examination findings and test results]
 
-SUBJECTIVE:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Chief Complaint:
-  ▢ Primary concern
-  ▢ Duration and severity
+## Assessment
+[Clinical analysis and differential diagnoses]
 
-• History of Present Illness:
-  ▢ Onset and progression
-  ▢ Associated symptoms
-  ▢ Aggravating/alleviating factors
+## Plan
+[Treatment recommendations and follow-up]
 
-• Past Medical History:
-  ▢ Relevant conditions
-  ▢ Previous treatments
-  ▢ Surgical history
+## Conclusion
+[Summary of key findings and plan]
 
-• Current Medications:
-  ▢ Name, dosage, frequency
-  ▢ Compliance status
-  ▢ Recent changes
+## Differential Diagnosis
+[Primary condition in System-Condition format]
 
-• Allergies:
-  ▢ Medication allergies
-  ▢ Environmental allergies
-  ▢ Reactions
+---
 
-• Family History:
-  ▢ Relevant conditions
-  ▢ Age of onset
-  ▢ Current status
-
-• Social History:
-  ▢ Occupation
-  ▢ Living situation
-  ▢ Habits (smoking, alcohol, exercise)
-
-• Review of Systems:
-  ▢ Cardiovascular
-  ▢ Respiratory
-  ▢ Other pertinent systems
-
-OBJECTIVE:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Vital Signs:
-  ▢ Blood pressure: [Value]
-  ▢ Heart rate: [Value]
-  ▢ Respiratory rate: [Value]
-  ▢ Temperature: [Value]
-  ▢ O2 saturation: [Value]
-
-• Physical Examination:
-  ▢ General appearance
-  ▢ Cardiovascular exam
-  ▢ Respiratory exam
-  ▢ Other relevant findings
-
-• Laboratory Results:
-  ▢ Recent tests
-  ▢ Significant values
-  ▢ Pending results
-
-ASSESSMENT:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Primary Diagnosis:
-  ▢ Condition
-  ▢ Severity
-  ▢ Stability
-
-• Secondary Diagnoses:
-  ▢ Related conditions
-  ▢ Complications
-  ▢ Risk factors
-
-• Clinical Reasoning:
-  ▢ Supporting evidence
-  ▢ Differential diagnoses
-  ▢ Risk assessment
-
-PLAN:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Medications:
-  ▢ New prescriptions
-  ▢ Modifications
-  ▢ Discontinued medications
-
-• Treatment Plan:
-  ▢ Interventions
-  ▢ Referrals
-  ▢ Lifestyle modifications
-
-• Patient Education:
-  ▢ Instructions provided
-  ▢ Warning signs reviewed
-  ▢ Follow-up care explained
-
-• Follow-up:
-  ▢ Next appointment
-  ▢ Monitoring parameters
-  ▢ Emergency instructions
-
-==============================================
-            Additional Notes
-==============================================
-• Critical Observations:
-  ▢ Key findings
-  ▢ Areas of concern
-  ▢ Required attention
-
-Please extract and organize all relevant clinical information from the conversation into this structured format.
-If certain information is not mentioned in the transcript, mark it as 'Not reported' or 'Not assessed'.
+### Notes for Response Generation:
+- Convert the following transcript into the above format: {transcript}
+- Maintain professional medical terminology
+- Focus on cardiovascular findings
+- Include only information present in the transcript
+- Structure all content using markdown headers and bullet points
+- Use proper medical documentation standards
+- Ensure all sections are complete and accurate
 """
 
 prompt = PromptTemplate(
@@ -167,14 +74,14 @@ prompt = PromptTemplate(
 )
 
 @app.post("/transcribe")
-async def transcribe_audio(file: UploadFile = File(...)):
+async def transcribe_audio(file: UploadFile = File(...), language: str = None):
     try:
         # Save the uploaded file temporarily
         with open("temp_audio.wav", "wb") as buffer:
             buffer.write(await file.read())
         
         # Transcribe the audio
-        config = aai.TranscriptionConfig(language_code="ar", speech_model=aai.SpeechModel.nano)
+        config = aai.TranscriptionConfig(language_code=language, speech_model=aai.SpeechModel.nano)
         transcript = transcriber.transcribe("temp_audio.wav", config)
 
         # Generate SOAP note
