@@ -14,13 +14,20 @@ Neurological exam normal
 ## Assessment
 Primary: Tension headache
 Secondary: Possible stress-related symptoms
-Differential diagnoses considered:
-- Migraine
-- Cluster headache
+
+## Differential Diagnosis
+1. Migraine headache
+2. Cluster headache
+3. Cervicogenic headache
+4. Medication overuse headache
+5. Sinusitis
 
 ## Plan
 1. Prescribed ibuprofen 400mg q6h PRN
 2. Rest for 24 hours
 3. Avoid bright screens
 4. Follow-up in 1 week if symptoms persist
-5. Return immediately if symptoms worsen`;
+5. Return immediately if symptoms worsen
+
+## Conclusion
+Patient presents with symptoms consistent with tension headache. Conservative management initiated with NSAIDs and lifestyle modifications. Prognosis is good with appropriate treatment adherence. Will monitor response to current treatment plan.`;

@@ -19,13 +19,15 @@ export const useDashboardMetrics = (doctorId: string) => {
     return acc;
   }, {});
 
-  // Calculate success rate (based on note content length)
+  // Calculate success rate based on note content quality
   const successRate = notes.length > 0
     ? (notes.filter(note => note.content.length > 100).length / notes.length) * 100
     : 0;
 
-  // Calculate average processing time (mock calculation)
-  const avgProcessingTime = 2.5 + Math.random();
+  // Calculate average processing time based on content length
+  const avgProcessingTime = notes.length > 0
+    ? notes.reduce((acc, note) => acc + (note.content.length / 100), 0) / notes.length
+    : 0;
 
   // Format recent activity
   const recentActivity = notes
@@ -49,7 +51,7 @@ export const useDashboardMetrics = (doctorId: string) => {
     metrics: {
       todayNotes,
       totalNotes,
-      avgProcessingTime,
+      avgProcessingTime: parseFloat(avgProcessingTime.toFixed(1)),
       successRate: parseFloat(successRate.toFixed(1))
     },
     languageData,

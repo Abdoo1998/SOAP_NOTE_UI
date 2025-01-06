@@ -1,5 +1,5 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "magdi-yacoub-dashboard",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -13,6 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/node": "^20.11.19",
     "lucide-react": "^0.344.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -26,7 +27,9 @@
     "zustand": "^4.5.1",
     "clsx": "^2.1.0",
     "tailwind-merge": "^2.2.1",
-    "framer-motion": "^11.0.5"
+    "framer-motion": "^11.0.5",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",

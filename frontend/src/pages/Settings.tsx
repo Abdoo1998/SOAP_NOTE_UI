@@ -1,5 +1,6 @@
 import React from 'react';
 import { Save, Moon, Sun, Monitor, Globe2, Clock } from 'lucide-react';
+import { useTheme } from '../hooks/useTheme';
 import { useThemeSettings } from '../hooks/useThemeSettings';
 import { PageTransition } from '../components/transitions/PageTransition';
 import { FadeIn } from '../components/transitions/FadeIn';
@@ -14,11 +15,25 @@ export function Settings() {
     setAutoSaveInterval,
   } = useThemeSettings();
 
+  const { setTheme } = useTheme();
+
+  const handleThemeChange = (theme: 'light' | 'dark' | 'system') => {
+    setDefaultTheme(theme);
+    
+    // Update the actual theme
+    if (theme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(prefersDark);
+    } else {
+      setTheme(theme === 'dark');
+    }
+  };
+
   const handleSave = () => {
     // Settings are automatically saved by zustand-persist
     // This is just for user feedback
     const toast = document.createElement('div');
-    toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg';
+    toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
     toast.textContent = 'Settings saved successfully';
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
@@ -29,7 +44,7 @@ export function Settings() {
       <div className="space-y-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
         
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="p-6 border-b border-gray-100 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Appearance</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -51,7 +66,7 @@ export function Settings() {
                   ].map(({ value, label, icon: Icon }) => (
                     <button
                       key={value}
-                      onClick={() => setDefaultTheme(value as 'light' | 'dark' | 'system')}
+                      onClick={() => handleThemeChange(value as 'light' | 'dark' | 'system')}
                       className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all ${
                         defaultTheme === value
                           ? 'border-hospital-500 bg-hospital-50 dark:bg-hospital-900/20 text-hospital-700 dark:text-hospital-300'

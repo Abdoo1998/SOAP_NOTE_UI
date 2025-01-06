@@ -2,7 +2,9 @@ interface ParsedSoap {
   subjective: string;
   objective: string;
   assessment: string;
+  differentialDiagnosis: string;
   plan: string;
+  conclusion: string;
 }
 
 export const parseSoapNote = (content: string): ParsedSoap => {
@@ -10,35 +12,49 @@ export const parseSoapNote = (content: string): ParsedSoap => {
     subjective: '',
     objective: '',
     assessment: '',
-    plan: ''
+    differentialDiagnosis: '',
+    plan: '',
+    conclusion: ''
   };
 
-  // Split content into lines and remove empty lines
-  const lines = content.split('\n').filter(line => line.trim());
+  // Return empty sections if no content
+  if (!content || typeof content !== 'string') {
+    return sections;
+  }
+
+  // Split content into lines
+  const lines = content.split('\n');
   let currentSection: keyof ParsedSoap | null = null;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+  for (const line of lines) {
+    const trimmedLine = line.trim();
     
-    // Check for section headers with ##
-    if (line.toLowerCase().startsWith('## subjective')) {
+    // Check for section headers
+    if (trimmedLine.toLowerCase().startsWith('## subjective')) {
       currentSection = 'subjective';
       continue;
-    } else if (line.toLowerCase().startsWith('## objective')) {
+    } else if (trimmedLine.toLowerCase().startsWith('## objective')) {
       currentSection = 'objective';
       continue;
-    } else if (line.toLowerCase().startsWith('## assessment')) {
+    } else if (trimmedLine.toLowerCase().startsWith('## assessment')) {
       currentSection = 'assessment';
       continue;
-    } else if (line.toLowerCase().startsWith('## plan')) {
+    } else if (trimmedLine.toLowerCase().startsWith('## differential diagnosis')) {
+      currentSection = 'differentialDiagnosis';
+      continue;
+    } else if (trimmedLine.toLowerCase().startsWith('## plan')) {
       currentSection = 'plan';
+      continue;
+    } else if (trimmedLine.toLowerCase().startsWith('## conclusion')) {
+      currentSection = 'conclusion';
       continue;
     }
 
-    // Add content to current section if we're in one
-    if (currentSection) {
-      // Add the line with proper spacing
-      sections[currentSection] += (sections[currentSection] ? '\n' : '') + line;
+    // Add content to current section
+    if (currentSection && trimmedLine) {
+      sections[currentSection] = sections[currentSection]
+        ? `${sections[currentSection]}\n${trimmedLine}`
+        : trimmedLine;
     }
   }
 

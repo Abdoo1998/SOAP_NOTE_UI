@@ -5,21 +5,92 @@
 @layer base {
   :root {
     color-scheme: light dark;
+    --tw-bg-opacity-80: rgba(255, 255, 255, 0.8);
+    --tw-border-opacity-20: rgba(229, 231, 235, 0.2);
+    --tw-text-opacity-90: rgba(17, 24, 39, 0.9);
+  }
+
+  .dark {
+    --tw-bg-opacity-80: rgba(31, 41, 55, 0.8);
+    --tw-border-opacity-20: rgba(75, 85, 99, 0.2);
+    --tw-text-opacity-90: rgba(243, 244, 246, 0.9);
   }
   
   body {
-    @apply bg-gray-50 text-gray-900 transition-colors duration-200;
-  }
-
-  .dark body {
-    @apply bg-gray-900 text-gray-100;
+    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200;
   }
 }
 
-.prose {
-  @apply text-gray-900 dark:text-gray-100;
+/* Card and container styles */
+.card {
+  @apply bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-sm;
 }
 
-.dark .prose {
-  @apply text-gray-100;
+/* Input styles */
+input, select, textarea {
+  @apply bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600;
+}
+
+/* Button styles */
+button {
+  @apply text-gray-700 dark:text-gray-300;
+}
+
+/* Background colors */
+.bg-card {
+  @apply bg-white dark:bg-gray-800;
+}
+
+/* Text colors */
+.text-primary {
+  @apply text-gray-900 dark:text-white;
+}
+
+.text-secondary {
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+/* Chart styles */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  @apply stroke-gray-200 dark:stroke-gray-700;
+}
+
+.recharts-text {
+  @apply fill-gray-600 dark:fill-gray-400;
+}
+
+.recharts-tooltip-wrapper {
+  @apply !shadow-lg;
+}
+
+/* Animation utilities */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

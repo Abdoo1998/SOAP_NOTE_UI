@@ -5,9 +5,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    host: true // Enable listening on all addresses
+    host: true
   },
   optimizeDeps: {
+    include: ['html2canvas', 'jspdf'],
     exclude: ['lucide-react']
+  },
+  build: {
+    commonjsOptions: {
+      include: [/html2canvas/, /jspdf/]
+    }
   }
 });

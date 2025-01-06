@@ -6,6 +6,7 @@ import { NewSoapNote } from '../../pages/NewSoapNote';
 import { History } from '../../pages/History';
 import { Analytics } from '../../pages/Analytics';
 import { Settings } from '../../pages/Settings';
+import { Support } from '../../pages/Support';
 import { PageTransition } from './PageTransition';
 
 export const AnimatedRoutes = () => {
@@ -37,6 +38,11 @@ export const AnimatedRoutes = () => {
         <Route path="/settings" element={
           <PageTransition>
             <Settings />
+          </PageTransition>
+        } />
+        <Route path="/support" element={
+          <PageTransition>
+            <Support />
           </PageTransition>
         } />
       </Routes>

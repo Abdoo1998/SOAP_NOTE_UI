@@ -1,13 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { SearchBar } from '../components/history/SearchBar';
-import { LanguageFilter } from '../components/history/LanguageFilter';
 import { HistoryItem } from '../components/history/HistoryItem';
 import { useHistory } from '../hooks/useHistory';
 import { useAuth } from '../hooks/useAuth';
 
 export const History = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState('all');
   const { user } = useAuth();
   const { getNotesByDoctor } = useHistory();
 
@@ -16,33 +14,22 @@ export const History = () => {
   const filteredNotes = useMemo(() => {
     return userNotes.filter(note => {
       const searchValue = searchTerm.toLowerCase();
-      const matchesSearch = 
-        note.patientName.toLowerCase().includes(searchValue) ||
-        note.patientId.toLowerCase().includes(searchValue);
-      const matchesLanguage = selectedLanguage === 'all' || note.language === selectedLanguage;
-      return matchesSearch && matchesLanguage;
+      return note.patientName.toLowerCase().includes(searchValue) ||
+             note.patientId.toLowerCase().includes(searchValue);
     });
-  }, [userNotes, searchTerm, selectedLanguage]);
+  }, [userNotes, searchTerm]);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">SOAP Note History</h2>
-        
-        <div className="flex gap-4">
-          <SearchBar
-            value={searchTerm}
-            onChange={setSearchTerm}
-          />
-          
-          <LanguageFilter
-            value={selectedLanguage}
-            onChange={setSelectedLanguage}
-          />
-        </div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">SOAP Note History</h2>
+        <SearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+        />
       </div>
 
-      <div className="bg-white rounded-lg shadow divide-y">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
         {filteredNotes.length > 0 ? (
           filteredNotes.map((note) => (
             <HistoryItem
@@ -55,7 +42,7 @@ export const History = () => {
             />
           ))
         ) : (
-          <div className="p-6 text-center text-gray-500">
+          <div className="p-6 text-center text-gray-500 dark:text-gray-400">
             No SOAP notes found
           </div>
         )}

@@ -6,26 +6,29 @@ export default {
     extend: {
       colors: {
         hospital: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: '#eef7ff',
+          100: '#d9edff', 
+          200: '#bce0ff',
+          300: '#8ccbff',
+          400: '#49a6ff',
+          500: '#1a7fd5',
+          600: '#0c66b5',
+          700: '#0a5091',
+          800: '#0c4377',
+          900: '#0f3964',
         },
         accent: {
-          mint: '#4ade80',
-          coral: '#fb7185',
-          lavender: '#a78bfa',
-        },
-      },
-    },
+          success: '#10b981',
+          warning: '#f59e0b',
+          danger: '#ef4444',
+          info: '#3b82f6'
+        }
+      }
+    }
   },
   plugins: [
-    require('@tailwindcss/forms'),
+    require('@tailwindcss/forms')({
+      strategy: 'class',
+    }),
   ],
 }

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Bell, User, Heart } from 'lucide-react';
+import { Bell, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { ThemeToggle } from './ThemeToggle';
 import { FadeIn } from '../transitions/FadeIn';
 import { SlideIn } from '../transitions/SlideIn';
+import { Logo } from './Logo';
 
 export const Header = () => {
   const { user } = useAuth();
@@ -12,12 +13,7 @@ export const Header = () => {
     <header className="h-16 bg-white dark:bg-gray-800 shadow-sm fixed top-0 right-0 left-64 z-10 transition-all duration-300 ease-in-out">
       <div className="h-full px-6 flex items-center justify-between">
         <SlideIn direction="right" delay={0.1}>
-          <div className="flex items-center gap-2">
-            <Heart className="h-6 w-6 text-hospital-600 dark:text-hospital-400" />
-            <h1 className="text-xl font-semibold text-gray-800 dark:text-white">
-              Medical Dashboard
-            </h1>
-          </div>
+          <Logo />
         </SlideIn>
 
         <FadeIn delay={0.2}>

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useTheme } from './useTheme';
 
 interface ThemeSettings {
   defaultTheme: 'light' | 'dark' | 'system';
@@ -16,7 +17,9 @@ export const useThemeSettings = create<ThemeSettings>()(
       defaultTheme: 'system',
       language: 'en',
       autoSaveInterval: 5,
-      setDefaultTheme: (theme) => set({ defaultTheme: theme }),
+      setDefaultTheme: (theme) => {
+        set({ defaultTheme: theme });
+      },
       setLanguage: (lang) => set({ language: lang }),
       setAutoSaveInterval: (interval) => set({ autoSaveInterval: interval }),
     }),
