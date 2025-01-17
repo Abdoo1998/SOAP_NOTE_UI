@@ -39,33 +39,33 @@ soap_template = """
 You are an experienced medical professional tasked with creating a comprehensive and precise SOAP note. Generate a detailed clinical documentation from the provided transcript, adhering to the following structured format:
 
 ## Subjective
-• Chief Complaint:
+• Chief Complaint (if mentioned):
   - Primary concern with exact duration (days/weeks/months)
   - Pain scale rating (if applicable, 0-10)
   - Pattern and timing of symptoms
-• History of Present Illness:
+• History of Present Illness (if mentioned):
   - Chronological progression of symptoms
   - Specific associated symptoms
   - Precise aggravating and alleviating factors
   - Previous treatments attempted
-• Past Medical History:
+• Past Medical History (if mentioned):
   - Chronic conditions
   - Previous surgeries with dates
   - Relevant hospitalizations
-• Current Medications:
+• Current Medications (if mentioned):
   - Name (generic and brand)
   - Exact dosage and frequency
   - Duration of current regimen
   - Compliance history
-• Allergies:
+• Allergies (if mentioned):
   - Medication allergies with specific reactions
   - Environmental/food allergies
   - Severity of reactions
-• Family History:
+• Family History (if mentioned):
   - First-degree relatives' conditions
   - Age of onset for hereditary conditions
   - Current status of family members
-• Social History:
+• Social History (if mentioned):
   - Occupation and work environment
   - Living situation and support system
   - Detailed habits:
@@ -73,7 +73,7 @@ You are an experienced medical professional tasked with creating a comprehensive
     ∘ Alcohol (type, frequency, amount)
     ∘ Exercise routine
     ∘ Diet patterns
-• Review of Systems (positive/negative findings for):
+• Review of Systems (if mentioned):
   - Cardiovascular
   - Respiratory
   - Gastrointestinal
@@ -82,14 +82,14 @@ You are an experienced medical professional tasked with creating a comprehensive
   - Other pertinent systems
 
 ## Objective
-• Vital Signs (with units):
+• Vital Signs (if mentioned):
   - Blood pressure (mmHg)
   - Heart rate (bpm)
   - Temperature (°C/°F)
   - Respiratory rate (breaths/min)
   - O2 saturation (%)
   - BMI
-• Physical Examination:
+• Physical Examination (if mentioned):
   - General appearance
   - Mental status
   - Detailed cardiovascular exam:
@@ -105,97 +105,92 @@ You are an experienced medical professional tasked with creating a comprehensive
   - Metabolic panel
   - Cardiac enzymes
   - Other relevant tests
-• Diagnostic Studies:
+• Diagnostic Studies (if mentioned):
   - ECG findings
   - Imaging results
   - Other test results
+
 ## Assessment
-• Primary Diagnosis:
+• Primary Diagnosis (if mentioned):
   - Condition name with specificity (e.g., "Essential Hypertension, Stage 2, poorly controlled")
   - Severity/stage classification with detailed criteria:
     ∘ Clinical parameters
-    ∘ Risk stratification
+    ∘ Risk stratification 
     ∘ Disease progression indicators
   - Supporting evidence:
     ∘ Key symptoms and clinical findings
     ∘ Relevant test results
     ∘ Response to previous treatments
     ∘ Impact on patient's quality of life
-  • Clinical Reasoning:
-  - Key findings supporting diagnosis
-  - Risk stratification
-  - Disease progression assessment
-• Complications:
-  - Current complications
-  - Potential complications
-  - Risk factors
+  - Clinical reasoning:
+    ∘ Key findings supporting diagnosis
+    ∘ Risk stratification
+    ∘ Disease progression assessment
+  - Complications:
+    ∘ Current complications
+    ∘ Potential complications
+    ∘ Risk factors
 
-## Differential Diagnoses:
-• Primary Considerations:
-  - ICD-10 code with complete description (e.g., "I10 - Essential (primary) hypertension")
-  - Probability ranking (high/medium/low likelihood)
-  - Key clinical features supporting each diagnosis
-  - Specific diagnostic criteria met/unmet
-
-• Supporting Evidence:
-  - Relevant physical exam findings
-  - Laboratory results correlation
-  - Imaging study interpretations
-  - Clinical scoring systems/algorithms used
-
-• Rule-out Diagnoses:
-  - Critical conditions to exclude
-  - Red flag symptoms/signs
-  - Risk stratification factors
-  - Required testing to definitively rule out
-
-• Distinguishing Characteristics:
-  - Unique presenting features
-  - Temporal relationships
-  - Response to therapeutic trials
-  - Disease-specific markers/tests
-
-• Clinical Decision Points:
-  - Key diagnostic uncertainties
-  - Required additional workup
-  - Consultation needs
-  - Monitoring parameters
-
-
+• Differential Considerations:
+  - Primary diagnoses:
+    ∘ ICD-10 code with complete description (e.g., "I10 - Essential (primary) hypertension")
+    ∘ Probability ranking (high/medium/low likelihood)
+    ∘ Key clinical features supporting each diagnosis
+    ∘ Specific diagnostic criteria met/unmet
+  - Supporting evidence:
+    ∘ Relevant physical exam findings
+    ∘ Laboratory results correlation
+    ∘ Imaging study interpretations
+    ∘ Clinical scoring systems/algorithms used
+  - Rule-out diagnoses:
+    ∘ Critical conditions to exclude
+    ∘ Red flag symptoms/signs
+    ∘ Risk stratification factors
+    ∘ Required testing to definitively rule out
+  - Distinguishing characteristics:
+    ∘ Unique presenting features
+    ∘ Temporal relationships
+    ∘ Response to therapeutic trials
+    ∘ Disease-specific markers/tests
+  - Clinical decision points:
+    ∘ Key diagnostic uncertainties
+    ∘ Required additional workup
+    ∘ Consultation needs
+    ∘ Monitoring parameters
 
 ## Plan
-• Medications:
+• Medications (if mentioned):
   - New prescriptions (name, dose, frequency, duration)
   - Modified medications
   - Discontinued medications
   - Reason for each change
-• Diagnostic Testing:
+• Diagnostic Testing (if mentioned):
   - Ordered tests with rationale
   - Expected timeframe
   - Specific instructions
-• Interventions:
+• Interventions (if mentioned):
   - Procedures planned
   - Referrals with urgency level
   - Specialist consultations
-• Patient Education:
+• Patient Education (if mentioned):
   - Lifestyle modifications
   - Warning signs to monitor
   - Self-management instructions
-• Follow-up:
+• Follow-up (if mentioned):
   - Next appointment timing
   - Specific goals for next visit
   - Conditions for earlier return
 
 ## Conclusion
-• Case Summary:
+• Case Summary (if mentioned):
   - Brief overview of key findings
   - Main diagnostic considerations
   - Treatment strategy rationale
-• Prognosis:
+• Prognosis (if mentioned):
   - Expected outcomes
   - Recovery timeline
   - Long-term management needs
-• Quality Metrics:
+• Quality Metrics (if mentioned):
   - Care plan compliance
   - Outcome measures
   - Documentation completeness
