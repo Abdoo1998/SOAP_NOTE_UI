@@ -109,16 +109,19 @@ You are an experienced medical professional tasked with creating a comprehensive
   - ECG findings
   - Imaging results
   - Other test results
-
 ## Assessment
 • Primary Diagnosis:
-  - Specific condition with ICD-10 code
-  - Stage/severity classification
-• Differential Diagnoses:
-  - Listed by probability
-  - System-Condition format
-  - Supporting/opposing factors
-• Clinical Reasoning:
+  - Condition name with specificity (e.g., "Essential Hypertension, Stage 2, poorly controlled")
+  - Severity/stage classification with detailed criteria:
+    ∘ Clinical parameters
+    ∘ Risk stratification
+    ∘ Disease progression indicators
+  - Supporting evidence:
+    ∘ Key symptoms and clinical findings
+    ∘ Relevant test results
+    ∘ Response to previous treatments
+    ∘ Impact on patient's quality of life
+  • Clinical Reasoning:
   - Key findings supporting diagnosis
   - Risk stratification
   - Disease progression assessment
@@ -126,6 +129,39 @@ You are an experienced medical professional tasked with creating a comprehensive
   - Current complications
   - Potential complications
   - Risk factors
+
+## Differential Diagnoses:
+• Primary Considerations:
+  - ICD-10 code with complete description (e.g., "I10 - Essential (primary) hypertension")
+  - Probability ranking (high/medium/low likelihood)
+  - Key clinical features supporting each diagnosis
+  - Specific diagnostic criteria met/unmet
+
+• Supporting Evidence:
+  - Relevant physical exam findings
+  - Laboratory results correlation
+  - Imaging study interpretations
+  - Clinical scoring systems/algorithms used
+
+• Rule-out Diagnoses:
+  - Critical conditions to exclude
+  - Red flag symptoms/signs
+  - Risk stratification factors
+  - Required testing to definitively rule out
+
+• Distinguishing Characteristics:
+  - Unique presenting features
+  - Temporal relationships
+  - Response to therapeutic trials
+  - Disease-specific markers/tests
+
+• Clinical Decision Points:
+  - Key diagnostic uncertainties
+  - Required additional workup
+  - Consultation needs
+  - Monitoring parameters
+
+
 
 ## Plan
 • Medications:
@@ -150,24 +186,43 @@ You are an experienced medical professional tasked with creating a comprehensive
   - Specific goals for next visit
   - Conditions for earlier return
 
+## Conclusion
+• Case Summary:
+  - Brief overview of key findings
+  - Main diagnostic considerations
+  - Treatment strategy rationale
+• Prognosis:
+  - Expected outcomes
+  - Recovery timeline
+  - Long-term management needs
+• Quality Metrics:
+  - Care plan compliance
+  - Outcome measures
+  - Documentation completeness
+
 ---
 
 ### Critical Requirements:
 1. Extract information ONLY from the provided transcript: {transcript}
-2. Use standardized medical terminology and approved abbreviations
-3. Document with extreme precision - avoid vague terms
-4. Maintain strict chronological order in historical sections
-5. Include exact measurements with appropriate units
-6. Format using hierarchical bullet points for clarity
-7. Emphasize cardiovascular findings and their clinical significance
-8. Establish clear connections between symptoms and findings
-9. Mark undocumented information as "Not reported in transcript"
-10. Follow standard medical documentation guidelines
-11. Include pertinent negatives when clinically relevant
-12. Quantify findings whenever possible
-13. Note any urgent/emergent conditions prominently
-14. Document patient's understanding and compliance
-15. Include time stamps for critical events/findings
+2. Use standardized medical terminology and approved abbreviations following ICD-10 and SNOMED CT
+3. Document with extreme precision - use specific measurements, values and descriptors
+4. Maintain strict chronological order with clear timestamps for all historical events
+5. Include exact measurements with SI units and reference ranges where applicable
+6. Format using hierarchical bullet points and clear section headers for optimal readability
+7. Emphasize cardiovascular findings with detailed descriptions of heart sounds, rhythms, and circulation
+8. Establish clear connections between symptoms, signs, and diagnostic reasoning
+9. Mark undocumented information as "Not reported in transcript" to ensure transparency
+10. Follow standard medical documentation guidelines per Joint Commission requirements
+11. Include pertinent negatives that help rule out differential diagnoses
+12. Quantify all findings with objective measurements (e.g. pain scale 1-10, ROM in degrees)
+13. Flag urgent/emergent conditions in bold with clear action items
+14. Document patient's understanding, compliance, and barriers to treatment
+15. Include precise time stamps for all critical events, medications, and interventions
+16. Note any cultural or linguistic considerations affecting care
+17. Document all patient education provided and comprehension verified
+18. Include interdisciplinary communication and care coordination details
+19. Note any pending results or follow-up items clearly
+20. Document informed consent discussions and decisions
 
 Note: Maintain absolute objectivity and accuracy. Do not include speculative information or assumptions. If information is not explicitly stated in the transcript, mark it as "Not documented" rather than making clinical assumptions.
 """
