@@ -130,10 +130,9 @@ You are an experienced medical professional tasked with creating a comprehensive
     ∘ Current complications
     ∘ Potential complications
     ∘ Risk factors
-
 • Differential Considerations:
   - Primary diagnoses:
-    ∘ ICD-10 code with complete description (e.g., "I10 - Essential (primary) hypertension")
+    ∘ ICD-11 code with complete description (e.g., "BA00 - Essential hypertension")
     ∘ Probability ranking (high/medium/low likelihood)
     ∘ Key clinical features supporting each diagnosis
     ∘ Specific diagnostic criteria met/unmet
