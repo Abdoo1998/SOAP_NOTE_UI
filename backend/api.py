@@ -1,13 +1,28 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import assemblyai as aai
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 import os
 from dotenv import load_dotenv
+from sqlalchemy.orm import Session
+from datetime import datetime
+from pydantic import BaseModel
+
+from database import SessionLocal, engine
+from models import SoapNoteDB
 
 # Load environment variables
 load_dotenv()
+
+# Pydantic model for request validation
+class SoapNoteCreate(BaseModel):
+    patient_id: str
+    patient_name: str
+    content: str
+
+    class Config:
+        from_attributes = True
 
 # Set up FastAPI
 app = FastAPI()
@@ -226,8 +241,16 @@ prompt = PromptTemplate(
     template=soap_template
 )
 
+# Database dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 @app.post("/transcribe")
-async def transcribe_audio(file: UploadFile = File(...), language: str = 'ar'):
+async def transcribe_audio(file: UploadFile = File(...), language: str = 'ar', db: Session = Depends(get_db)):
     try:
         # Save the uploaded file temporarily
         with open("temp_audio.wav", "wb") as buffer:
@@ -247,7 +270,61 @@ async def transcribe_audio(file: UploadFile = File(...), language: str = 'ar'):
 
         return {"soap_note": soap_note.content}
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/soap-notes/")
+async def create_soap_note(soap_note: SoapNoteCreate, db: Session = Depends(get_db)):
+    try:
+        db_soap_note = SoapNoteDB(
+            patient_id=soap_note.patient_id,
+            patient_name=soap_note.patient_name,
+            content=soap_note.content
+        )
+        db.add(db_soap_note)
+        db.commit()
+        db.refresh(db_soap_note)
+        return {
+            "id": db_soap_note.id,
+            "patient_id": db_soap_note.patient_id,
+            "patient_name": db_soap_note.patient_name,
+            "content": db_soap_note.content,
+            "created_at": db_soap_note.created_at
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/soap-notes/{patient_id}")
+async def get_soap_notes(patient_id: str, db: Session = Depends(get_db)):
+    try:
+        soap_notes = db.query(SoapNoteDB).filter(
+            SoapNoteDB.patient_id == patient_id
+        ).all()
+        
+        return [{
+            "id": note.id,
+            "patient_id": note.patient_id,
+            "patient_name": note.patient_name,
+            "content": note.content,
+            "created_at": note.created_at
+        } for note in soap_notes]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/soap-notes/")
+async def get_all_soap_notes(db: Session = Depends(get_db)):
+    try:
+        # Query all soap notes, ordered by creation date (newest first)
+        soap_notes = db.query(SoapNoteDB).order_by(SoapNoteDB.created_at.desc()).all()
+        
+        return [{
+            "id": note.id,
+            "patient_id": note.patient_id,
+            "patient_name": note.patient_name,
+            "content": note.content,
+            "created_at": note.created_at
+        } for note in soap_notes]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn
