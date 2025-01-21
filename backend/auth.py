@@ -20,7 +20,7 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 # JWT settings
-SECRET_KEY = "your_secret_key"
+SECRET_KEY = "4w3rQqdKI8zHB4xZd4mrKdYpTnwnL6yUNnVCT__ZaXYK8ea2NjBTnrtr41ktMKDbdVc"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
