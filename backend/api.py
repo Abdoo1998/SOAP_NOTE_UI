@@ -8,9 +8,18 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from datetime import datetime
 from pydantic import BaseModel
-
+from schemas import UserCreate, UserResponse, Token, LoginRequest
 from database import SessionLocal, engine
-from models import SoapNoteDB
+from models import SoapNoteDB, User
+from passlib.context import CryptContext
+from auth import authenticate_user, create_access_token
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
 
 # Load environment variables
 load_dotenv()
@@ -248,6 +257,28 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Register route
+@app.post("/register", response_model=UserResponse)
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    hashed_password = get_password_hash(user.password)
+    new_user = User(email=user.email, hashed_password=hashed_password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+# Login route
+@app.post("/login", response_model=Token)
+def login(request: LoginRequest, db: Session = Depends(get_db)):
+    user = authenticate_user(db, request.email, request.password)
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid email or password")
+    access_token = create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/transcribe")
 async def transcribe_audio(file: UploadFile = File(...), language: str = 'ar', db: Session = Depends(get_db)):
