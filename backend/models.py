@@ -20,4 +20,6 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
+    username = Column(String(100), unique=True, index=True)
+    job = Column(String(100))
     hashed_password = Column(String)

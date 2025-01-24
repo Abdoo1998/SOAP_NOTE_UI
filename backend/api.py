@@ -156,7 +156,7 @@ You are an experienced medical professional tasked with creating a comprehensive
     ∘ Risk factors
 • Differential Considerations:
   - Primary diagnoses:
-    ∘ ICD-11 code with complete description (e.g., "BA00 - Essential hypertension")
+    ∘ ICD-11 code with complete description (e.g., "BA01.0 - Primary essential hypertension")
     ∘ Probability ranking (high/medium/low likelihood)
     ∘ Key clinical features supporting each diagnosis
     ∘ Specific diagnostic criteria met/unmet
