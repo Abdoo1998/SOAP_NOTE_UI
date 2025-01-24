@@ -288,7 +288,7 @@ async def transcribe_audio(file: UploadFile = File(...), language: str = 'ar', d
             buffer.write(await file.read())
         
         # Transcribe the audio
-        config = aai.TranscriptionConfig(language_code='ar', speech_model=aai.SpeechModel.nano)
+        config = aai.TranscriptionConfig(language_code=language, speech_model=aai.SpeechModel.nano)
         transcript = transcriber.transcribe("temp_audio.wav", config)
 
         # Generate SOAP note
