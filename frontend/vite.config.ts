@@ -8,16 +8,12 @@ export default defineConfig({
     host: true
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'zustand', 'zustand/middleware', 'use-sync-external-store'],
+    include: ['html2canvas', 'jspdf'],
     exclude: ['lucide-react']
   },
   build: {
     commonjsOptions: {
-      include: [/node_modules/],
-      transformMixedEsModules: true
+      include: [/html2canvas/, /jspdf/]
     }
-  },
-  resolve: {
-    dedupe: ['react', 'react-dom', 'zustand']
   }
 });
