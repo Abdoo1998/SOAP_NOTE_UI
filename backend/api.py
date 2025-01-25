@@ -154,32 +154,28 @@ You are an experienced medical professional tasked with creating a comprehensive
     ∘ Current complications
     ∘ Potential complications
     ∘ Risk factors
-• Differential Considerations:
-  - Primary diagnoses:
-    ∘ ICD-11 code with complete description (e.g., "BA01.0 - Primary essential hypertension")
-    ∘ Probability ranking (high/medium/low likelihood)
-    ∘ Key clinical features supporting each diagnosis
-    ∘ Specific diagnostic criteria met/unmet
-  - Supporting evidence:
-    ∘ Relevant physical exam findings
-    ∘ Laboratory results correlation
-    ∘ Imaging study interpretations
-    ∘ Clinical scoring systems/algorithms used
-  - Rule-out diagnoses:
-    ∘ Critical conditions to exclude
-    ∘ Red flag symptoms/signs
-    ∘ Risk stratification factors
-    ∘ Required testing to definitively rule out
-  - Distinguishing characteristics:
-    ∘ Unique presenting features
-    ∘ Temporal relationships
-    ∘ Response to therapeutic trials
-    ∘ Disease-specific markers/tests
-  - Clinical decision points:
-    ∘ Key diagnostic uncertainties
-    ∘ Required additional workup
-    ∘ Consultation needs
-    ∘ Monitoring parameters
+
+## Differential Diagnosis
+• Primary Differential Diagnoses:
+  - List of potential diagnoses in order of likelihood
+  - For each diagnosis:
+    ∘ ICD-11 code and complete description
+    ∘ Supporting evidence and clinical findings
+    ∘ Key distinguishing features
+    ∘ Required confirmatory tests
+• Secondary Differential Diagnoses:
+  - Additional conditions to consider
+  - Risk factors and predisposing conditions
+  - Required screening or testing
+• Critical "Must-Not-Miss" Diagnoses:
+  - Life-threatening conditions to rule out
+  - Red flag symptoms/signs
+  - Emergency management considerations
+• Diagnostic Approach:
+  - Systematic evaluation strategy
+  - Key diagnostic tests needed
+  - Clinical decision points
+  - Consultation requirements
 
 ## Plan
 • Medications (if mentioned):
@@ -244,7 +240,6 @@ You are an experienced medical professional tasked with creating a comprehensive
 
 Note: Maintain absolute objectivity and accuracy. Do not include speculative information or assumptions. If information is not explicitly stated in the transcript, mark it as "Not documented" rather than making clinical assumptions.
 """
-
 prompt = PromptTemplate(
     input_variables=["transcript"],
     template=soap_template
@@ -354,6 +349,53 @@ async def get_all_soap_notes(db: Session = Depends(get_db)):
             "content": note.content,
             "created_at": note.created_at
         } for note in soap_notes]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/analyze-patient-case")
+async def analyze_patient_case(patient_identifier: str, search_by: str = "id", db: Session = Depends(get_db)):
+    try:
+        # Search by patient ID or name
+        if search_by == "name":
+            soap_notes = db.query(SoapNoteDB).filter(
+                SoapNoteDB.patient_name == patient_identifier
+            ).order_by(SoapNoteDB.created_at.desc()).all()
+        else:
+            soap_notes = db.query(SoapNoteDB).filter(
+                SoapNoteDB.patient_id == patient_identifier
+            ).order_by(SoapNoteDB.created_at.desc()).all()
+
+        if not soap_notes:
+            raise HTTPException(status_code=404, detail="No SOAP notes found for this patient")
+
+        # Combine all SOAP notes into a single text for analysis
+        combined_notes = "\n\n".join([
+            f"Date: {note.created_at}\n{note.content}" 
+            for note in soap_notes
+        ])
+
+        # Create analysis prompt
+        analysis_prompt = f"""
+        Please analyze the following patient's SOAP notes and provide:
+        1. A summary of the patient's medical history
+        2. Key findings and patterns across visits
+        3. Notable changes in condition over time
+        4. Potential areas of concern
+        5. Recommendations for follow-up
+
+        SOAP Notes:
+        {combined_notes}
+        """
+
+        # Get AI analysis
+        analysis = llm.invoke(analysis_prompt)
+
+        return {
+            "patient_identifier": patient_identifier,
+            "search_by": search_by,
+            "number_of_notes": len(soap_notes),
+            "analysis": analysis.content
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
