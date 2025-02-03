@@ -14,7 +14,7 @@ from models import SoapNoteDB, User
 from passlib.context import CryptContext
 from auth import authenticate_user, create_access_token
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+from langchain_google_genai import ChatGoogleGenerativeAI
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -46,14 +46,20 @@ app.add_middleware(
 )
 
 # Set up AssemblyAI
-aai.settings.api_key = "ca9031d75ccf4bccb3e7ec52cbe0d2df"
+aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
 transcriber = aai.Transcriber()
 
-# Set up LangChain with OpenAI
-llm = ChatOpenAI(
-    model="gpt-4o",
+# # Set up LangChain with OpenAI
+# llm = ChatOpenAI(
+#     model="gpt-4o",
+#     temperature=0,
+#     api_key=os.getenv("OPENAI_API_KEY")
+# )
+
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash-002",
     temperature=0,
-    api_key=os.getenv("OPENAI_API_KEY")
+    api_key=os.getenv("GEMINI_API_KEY")
 )
 
 # SOAP note template
