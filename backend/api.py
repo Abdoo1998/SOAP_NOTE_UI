@@ -1,9 +1,10 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import assemblyai as aai
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI ,AzureChatOpenAI
 from langchain.prompts import PromptTemplate
 import os
+import logging
 from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -12,7 +13,8 @@ from schemas import UserCreate, UserResponse, Token, LoginRequest
 from database import SessionLocal, engine
 from models import SoapNoteDB, User
 from passlib.context import CryptContext
-from auth import authenticate_user, create_access_token
+
+from auth import authenticate_user, create_access_token, get_current_user
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 from langchain_google_genai import ChatGoogleGenerativeAI
 def get_password_hash(password: str) -> str:
@@ -21,8 +23,20 @@ def get_password_hash(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('app.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
 # Load environment variables
 load_dotenv()
+logger.info("Environment variables loaded")
 
 # Pydantic model for request validation
 class SoapNoteCreate(BaseModel):
@@ -48,203 +62,98 @@ app.add_middleware(
 # Set up AssemblyAI
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
 transcriber = aai.Transcriber()
+logger.info("AssemblyAI initialized")
 
-# # Set up LangChain with OpenAI
-# llm = ChatOpenAI(
-#     model="gpt-4o",
-#     temperature=0,
-#     api_key=os.getenv("OPENAI_API_KEY")
-# )
+# Set up LangChain with OpenAI as primary and Gemini as fallback
+try:
+    logger.info("Initializing OpenAI LLM")
+    llm = ChatOpenAI(
+        model="gpt-4o",
+        temperature=0,
+        api_key=os.getenv("OPENAI_API_KEY")
+    )
+    # llama = ChatLlamaAPI(os.getenv("LLAMA_API_KEY"))
+    logger.info("OpenAI LLM initialized successfully")
+    # llm=ChatLlamaAPI(clint=llama)
+except Exception as e:
+    logger.error(f"Failed to initialize OpenAI LLM: {str(e)}")
+    try:
+        logger.info("Falling back to Gemini LLM")
+        # llm = ChatGoogleGenerativeAI(
+        #     model="gemini-1.5-pro",
+        #     temperature=0,
+        #     api_key=os.getenv("GEMINI_API_KEY")
+        # )
+        logger.info("Gemini LLM initialized successfully")
+    except Exception as e2:
+        logger.error(f"Failed to initialize fallback Gemini LLM: {str(e2)}")
+        raise Exception("No LLM available: Please check your LLM configuration") from e2
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash-002",
-    temperature=0,
-    api_key=os.getenv("GEMINI_API_KEY")
-)
-
-# SOAP note template
+# Updated SOAP note template with enhanced accuracy and representation requirements
 soap_template = """
 # SOAP Note Template
 
-You are an experienced medical professional tasked with creating a comprehensive and precise SOAP note. Generate a detailed clinical documentation from the provided transcript, adhering to the following structured format:
+You are an experienced medical professional creating a comprehensive SOAP note from a patient encounter transcript. Please follow these guidelines:
 
-## Subjective
-• Chief Complaint (if mentioned):
-  - Primary concern with exact duration (days/weeks/months)
-  - Pain scale rating (if applicable, 0-10)
-  - Pattern and timing of symptoms
-• History of Present Illness (if mentioned):
-  - Chronological progression of symptoms
-  - Specific associated symptoms
-  - Precise aggravating and alleviating factors
-  - Previous treatments attempted
-• Past Medical History (if mentioned):
-  - Chronic conditions
-  - Previous surgeries with dates
-  - Relevant hospitalizations
-• Current Medications (if mentioned):
-  - Name (generic and brand)
-  - Exact dosage and frequency
-  - Duration of current regimen
-  - Compliance history
-• Allergies (if mentioned):
-  - Medication allergies with specific reactions
-  - Environmental/food allergies
-  - Severity of reactions
-• Family History (if mentioned):
-  - First-degree relatives' conditions
-  - Age of onset for hereditary conditions
-  - Current status of family members
-• Social History (if mentioned):
-  - Occupation and work environment
-  - Living situation and support system
-  - Detailed habits:
-    ∘ Smoking (packs/day, years)
-    ∘ Alcohol (type, frequency, amount)
-    ∘ Exercise routine
-    ∘ Diet patterns
-• Review of Systems (if mentioned):
-  - Cardiovascular
-  - Respiratory
-  - Gastrointestinal
-  - Musculoskeletal
-  - Neurological
-  - Other pertinent systems
+## Key Requirements:
+- Extract information ONLY from the provided transcript - do not invent or assume details
+- If no transcript is provided or it's empty, respond with: "No transcript provided. Unable to generate SOAP note without patient encounter data."
+- Use clear, hierarchical organization with proper medical terminology
+- Include specific measurements with units (vital signs, lab values, etc.)
+- Document timestamps when available
+- Highlight critical findings or concerns in **bold**
 
-## Objective
-• Vital Signs (if mentioned):
-  - Blood pressure (mmHg)
-  - Heart rate (bpm)
-  - Temperature (°C/°F)
-  - Respiratory rate (breaths/min)
-  - O2 saturation (%)
-  - BMI
-• Physical Examination (if mentioned):
-  - General appearance
-  - Mental status
-  - Detailed cardiovascular exam:
-    ∘ Heart sounds (S1/S2/murmurs)
-    ∘ Peripheral pulses
-    ∘ Edema assessment
-  - Respiratory exam
-  - Abdominal exam
-  - Neurological exam
-  - Skin assessment
-• Laboratory Results (if mentioned):
-  - Complete blood count
-  - Metabolic panel
-  - Cardiac enzymes
-  - Other relevant tests
-• Diagnostic Studies (if mentioned):
-  - ECG findings
-  - Imaging results
-  - Other test results
+## SOAP Structure:
 
-## Assessment
-• Primary Diagnosis (if mentioned):
-  - Condition name with specificity (e.g., "Essential Hypertension, Stage 2, poorly controlled")
-  - Severity/stage classification with detailed criteria:
-    ∘ Clinical parameters
-    ∘ Risk stratification 
-    ∘ Disease progression indicators
-  - Supporting evidence:
-    ∘ Key symptoms and clinical findings
-    ∘ Relevant test results
-    ∘ Response to previous treatments
-    ∘ Impact on patient's quality of life
-  - Clinical reasoning:
-    ∘ Key findings supporting diagnosis
-    ∘ Risk stratification
-    ∘ Disease progression assessment
-  - Complications:
-    ∘ Current complications
-    ∘ Potential complications
-    ∘ Risk factors
+### Subjective
+- Chief Complaint: Primary concern and duration
+- History of Present Illness: Onset, progression, related symptoms
+- Past Medical History: Chronic conditions, surgeries, hospitalizations
+- Medications: Names, dosages, frequency
+- Allergies: Medication and environmental with reactions
+- Family History: Relevant conditions in relatives
+- Social History: Occupation, living situation, habits (smoking, alcohol, etc.)
+- Review of Systems: Pertinent positive and negative findings by system
 
-## Differential Diagnosis
-• Primary Differential Diagnoses:
-  - List of potential diagnoses in order of likelihood
-  - For each diagnosis:
-    ∘ ICD-11 code and complete description
-    ∘ Supporting evidence and clinical findings
-    ∘ Key distinguishing features
-    ∘ Required confirmatory tests
-• Secondary Differential Diagnoses:
-  - Additional conditions to consider
-  - Risk factors and predisposing conditions
-  - Required screening or testing
-• Critical "Must-Not-Miss" Diagnoses:
-  - Life-threatening conditions to rule out
-  - Red flag symptoms/signs
-  - Emergency management considerations
-• Diagnostic Approach:
-  - Systematic evaluation strategy
-  - Key diagnostic tests needed
-  - Clinical decision points
-  - Consultation requirements
+### Objective
+- Vital Signs: BP, HR, temp, RR, O2 sat, weight/BMI
+- Physical Examination: Organized by body system
+- Laboratory Results: Recent labs with values and reference ranges
+- Diagnostic Studies: Imaging, ECG, or other test results
 
-## Plan
-• Medications (if mentioned):
-  - New prescriptions (name, dose, frequency, duration)
-  - Modified medications
-  - Discontinued medications
-  - Reason for each change
-• Diagnostic Testing (if mentioned):
-  - Ordered tests with rationale
-  - Expected timeframe
-  - Specific instructions
-• Interventions (if mentioned):
-  - Procedures planned
-  - Referrals with urgency level
-  - Specialist consultations
-• Patient Education (if mentioned):
-  - Lifestyle modifications
-  - Warning signs to monitor
-  - Self-management instructions
-• Follow-up (if mentioned):
-  - Next appointment timing
-  - Specific goals for next visit
-  - Conditions for earlier return
+### Assessment
+- Primary Diagnosis: With supporting evidence and reasoning
 
-## Conclusion
-• Case Summary (if mentioned):
-  - Brief overview of key findings
-  - Main diagnostic considerations
-  - Treatment strategy rationale
-• Prognosis (if mentioned):
-  - Expected outcomes
-  - Recovery timeline
-  - Long-term management needs
-• Quality Metrics (if mentioned):
-  - Care plan compliance
-  - Outcome measures
-  - Documentation completeness
+### Differential Diagnoses
+- List each potential diagnosis with complete ICD-11 code (format: XX##.#)
+- Include full ICD-11 description for each code
+- Document supporting evidence from patient data for each differential
+- Rank differentials in order of clinical likelihood with percentages
+- For each differential, include key distinguishing features
 
----
+### Plan
+- Medications: New, modified, or discontinued with specific instructions
+- Diagnostic Testing: Ordered tests with rationale
+- Treatments/Procedures: Interventions recommended or performed
+- Referrals: Specialist consultations needed
+- Patient Education: Instructions and information provided
+- Follow-up: Timing and purpose of next visit
 
-### Critical Requirements:
-1. Extract information ONLY from the provided transcript: {transcript}
-2. Use standardized medical terminology and approved abbreviations following ICD-10 and SNOMED CT
-3. Document with extreme precision - use specific measurements, values and descriptors
-4. Maintain strict chronological order with clear timestamps for all historical events
-5. Include exact measurements with SI units and reference ranges where applicable
-6. Format using hierarchical bullet points and clear section headers for optimal readability
-7. Emphasize cardiovascular findings with detailed descriptions of heart sounds, rhythms, and circulation
-8. Establish clear connections between symptoms, signs, and diagnostic reasoning
-9. Mark undocumented information as "Not reported in transcript" to ensure transparency
-10. Follow standard medical documentation guidelines per Joint Commission requirements
-11. Include pertinent negatives that help rule out differential diagnoses
-12. Quantify all findings with objective measurements (e.g. pain scale 1-10, ROM in degrees)
-13. Flag urgent/emergent conditions in bold with clear action items
-14. Document patient's understanding, compliance, and barriers to treatment
-15. Include precise time stamps for all critical events, medications, and interventions
-16. Note any cultural or linguistic considerations affecting care
-17. Document all patient education provided and comprehension verified
-18. Include interdisciplinary communication and care coordination details
-19. Note any pending results or follow-up items clearly
-20. Document informed consent discussions and decisions
+### Conclusion
+- Case Summary: Brief overview of key findings and main concerns
+- Diagnostic Reasoning: Summary of why primary diagnosis was selected
+- Treatment Strategy: Rationale for chosen interventions
+- Prognosis: Expected course and outcomes
+- Follow-up Priorities: Most important aspects to address at next visit
 
-Note: Maintain absolute objectivity and accuracy. Do not include speculative information or assumptions. If information is not explicitly stated in the transcript, mark it as "Not documented" rather than making clinical assumptions.
+## Important Notes:
+1. Maintain patient confidentiality in all documentation
+2. Use evidence-based reasoning and standard medical practices
+3. Document objectively without personal bias
+4. Include pertinent negatives that help rule out differential diagnoses
+
+Please generate a comprehensive SOAP note based on the following transcript:
+{transcript}
 """
 prompt = PromptTemplate(
     input_variables=["transcript"],
@@ -262,46 +171,120 @@ def get_db():
 # Register route
 @app.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    hashed_password = get_password_hash(user.password)
-    new_user = User(email=user.email, hashed_password=hashed_password)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
+    logger.info(f"Registration attempt for email: {user.email}")
+    try:
+        db_user = db.query(User).filter(User.email == user.email).first()
+        if db_user:
+            logger.warning(f"Registration failed: Email already exists: {user.email}")
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        username_exists = db.query(User).filter(User.username == user.username).first()
+        if username_exists:
+            logger.warning(f"Registration failed: Username already taken: {user.username}")
+            raise HTTPException(status_code=400, detail="Username already taken")
+        
+        hashed_password = get_password_hash(user.password)
+        new_user = User(
+            email=user.email,
+            username=user.username,
+            job=user.job,
+            hashed_password=hashed_password
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        logger.info(f"User registered successfully: {user.email}")
+        return new_user
+    except Exception as e:
+        logger.error(f"Registration error: {str(e)}")
+        raise
 
 # Login route
-@app.post("/login", response_model=Token)
+@app.post("/login")
 def login(request: LoginRequest, db: Session = Depends(get_db)):
-    user = authenticate_user(db, request.email, request.password)
-    if not user:
-        raise HTTPException(status_code=400, detail="Invalid email or password")
-    access_token = create_access_token(data={"sub": user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
+    logger.info(f"Login attempt for email: {request.email}")
+    try:
+        user = authenticate_user(db, request.email, request.password)
+        if not user:
+            logger.warning(f"Login failed: Invalid credentials for {request.email}")
+            raise HTTPException(status_code=400, detail="Invalid email or password")
+        
+        access_token = create_access_token(data={"sub": user.email})
+        logger.info(f"User logged in successfully: {request.email}")
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username,
+                "job": user.job
+            }
+        }
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        raise
 
 @app.post("/transcribe")
 async def transcribe_audio(file: UploadFile = File(...), language: str = 'ar', db: Session = Depends(get_db)):
+    logger.info(f"Starting transcription for file: {file.filename}, language: {language}")
     try:
-        # Save the uploaded file temporarily
-        with open("temp_audio.wav", "wb") as buffer:
-            buffer.write(await file.read())
+        # Create temp directory if it doesn't exist
+        temp_dir = "temp_files"
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+            logger.info(f"Created temp directory: {temp_dir}")
         
-        # Transcribe the audio
-        config = aai.TranscriptionConfig(language_code=language, speech_model=aai.SpeechModel.nano)
-        transcript = transcriber.transcribe("temp_audio.wav", config)
-
-        # Generate SOAP note
-        soap_note = llm.invoke(
-            prompt.format(transcript=transcript.text)
-        )
-
-        # Clean up temporary file
-        os.remove("temp_audio.wav")
-
-        return {"soap_note": soap_note.content}
+        # Generate unique filename
+        temp_file_path = os.path.join(temp_dir, f"temp_audio_{os.urandom(8).hex()}.wav")
+        logger.info(f"Temporary file path: {temp_file_path}")
+        
+        try:
+            # Save the uploaded file temporarily
+            logger.info("Saving uploaded file")
+            with open(temp_file_path, "wb") as buffer:
+                contents = await file.read()
+                if not contents:
+                    logger.error("Empty file uploaded")
+                    raise HTTPException(status_code=400, detail="Empty file uploaded")
+                buffer.write(contents)
+            
+            # Transcribe the audio
+            logger.info("Starting AssemblyAI transcription")
+            config = aai.TranscriptionConfig(
+                language_code=language,
+                speech_model=aai.SpeechModel.nano
+            )
+            transcript = transcriber.transcribe(temp_file_path, config)
+            
+            if not transcript or not transcript.text:
+                logger.error("Transcription failed or returned empty result")
+                raise HTTPException(status_code=500, detail="Transcription failed or returned empty result")
+            
+            logger.info("Transcription successful, generating SOAP note")
+            # Generate SOAP note
+            soap_note = llm.invoke(
+                prompt.format(transcript=transcript.text)
+            )
+            
+            if not soap_note or not soap_note.content:
+                logger.error("SOAP note generation failed")
+                raise HTTPException(status_code=500, detail="SOAP note generation failed")
+            
+            logger.info("SOAP note generated successfully")
+            return {"soap_note": soap_note.content}
+            
+        except Exception as e:
+            logger.error(f"Error during processing: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
+        finally:
+            # Clean up temporary file
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+                logger.info(f"Cleaned up temporary file: {temp_file_path}")
+            
     except Exception as e:
+        logger.error(f"Transcription error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/soap-notes/")
@@ -384,7 +367,7 @@ async def analyze_patient_case(patient_identifier: str, search_by: str = "id", d
         analysis_prompt = f"""
         Please analyze the following patient's SOAP notes and provide:
         1. A summary of the patient's medical history
-        2. Key findings and patterns across visits
+        2. Key findings and patterns across visits 
         3. Notable changes in condition over time
         4. Potential areas of concern
         5. Recommendations for follow-up
@@ -395,16 +378,24 @@ async def analyze_patient_case(patient_identifier: str, search_by: str = "id", d
 
         # Get AI analysis
         analysis = llm.invoke(analysis_prompt)
+        # Check if the response is a string or an object with a content attribute
+        analysis_text = analysis if isinstance(analysis, str) else analysis.content
 
         return {
             "patient_identifier": patient_identifier,
             "search_by": search_by,
             "number_of_notes": len(soap_notes),
-            "analysis": analysis.content
+            "analysis": analysis_text
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)):
+    logger.info(f"User info requested for: {current_user.email}")
+    return current_user
+
 if __name__ == "__main__":
+    logger.info("Starting FastAPI application")
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
